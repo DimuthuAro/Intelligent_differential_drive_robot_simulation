@@ -2,7 +2,7 @@ from simulation_state import SimulationState
 from differential_drive_robot import DifferentialDriveRobot
 from controllers import RobotController, ControllerType
 from performance_monitor import PerformanceMonitor, OptimizationSuggestions
-import time , math , pygame as pg
+import math , pygame as pg
 from config import *
 
 class MainState(SimulationState):
@@ -38,15 +38,16 @@ class MainState(SimulationState):
         self.robot_radius = 20 # pixels
         self.destination_radius = 10 # pixels
         self.font = pg.font.SysFont("Arial", 16)
-        self.start_button: pg.Rect = pg.Rect(10, SCREEN_HEIGHT - 30, 60, 20)
-        self.stop_button: pg.Rect = pg.Rect(80, SCREEN_HEIGHT - 30, 60, 20)
         self.p_button: pg.Rect = pg.Rect(150, SCREEN_HEIGHT - 30, 40, 20)
         self.pd_button: pg.Rect = pg.Rect(200, SCREEN_HEIGHT - 30, 50, 20)
         self.pid_button: pg.Rect = pg.Rect(260, SCREEN_HEIGHT - 30, 50, 20)
         self.perf_button: pg.Rect = pg.Rect(320, SCREEN_HEIGHT - 30, 80, 20)
         self.analyze_button: pg.Rect = pg.Rect(410, SCREEN_HEIGHT - 30, 70, 20)
         self.path_button: pg.Rect = pg.Rect(490, SCREEN_HEIGHT - 30, 60, 20)
-        self.clear_button: pg.Rect = pg.Rect(560, SCREEN_HEIGHT - 30, 50, 20)    
+        self.clear_button: pg.Rect = pg.Rect(560, SCREEN_HEIGHT - 30, 50, 20)  
+        self.reset_button: pg.Rect = pg.Rect(20, SCREEN_HEIGHT - 30, 70, 20)
+        self.buttons: list[pg.Rect] = [self.p_button, self.pd_button, self.pid_button, self.perf_button,
+                                     self.analyze_button, self.path_button, self.clear_button, self.reset_button]  
     
     def handle_event(self, event):
         super().handle_event(event)
@@ -64,16 +65,10 @@ class MainState(SimulationState):
                     self.path_points.clear()
                     print(f"New destination set to: {self.destination_position} (screen) / ({world_x:.2f}, {world_y:.2f}) (world)")
                     print("Path cleared for new destination")
-            elif self.stop_button.collidepoint(mouse_position):
-                    print("Stop button pressed")
-                    self.robot.set_wheel_velocities(0.0, 0.0)
-                    self.robot.update(0)  # Update robot state immediately to stop
-                    self.controller.linear_controller.reset()
-                    self.controller.angular_controller.reset()
-                    self.robot_position = self.robot.get_position()
-            elif self.start_button.collidepoint(mouse_position):
+            elif self.reset_button.collidepoint(mouse_position):
                     print("Start button pressed")
                     # Reset robot position and controller states
+                    self.destination_position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
                     self.robot = DifferentialDriveRobot(0, 0, ROBOT_STARTING_ANGLE)  # Reset to world center
                     self.controller.linear_controller.reset()
                     self.controller.angular_controller.reset()
@@ -234,16 +229,10 @@ class MainState(SimulationState):
     def _render_commandbar(self, screen):
         #Render AT Bottom CommandBar Background
         pg.draw.rect(screen, GRAY, (0, SCREEN_HEIGHT - 40, SCREEN_WIDTH, 40))
-        
-        # Render Start Button
-        pg.draw.rect(screen, GREEN, self.start_button)
-        start_text = self.font.render("Start", True, BLACK)
-        screen.blit(start_text, (22, SCREEN_HEIGHT - 28))
-
-        # Render Stop Button
-        pg.draw.rect(screen, RED, self.stop_button)
-        stop_text = self.font.render("Stop", True, BLACK)
-        screen.blit(stop_text, (98, SCREEN_HEIGHT - 28))
+        # Render Reset Button
+        pg.draw.rect(screen, RED, self.reset_button)
+        reset_text = self.font.render("Reset", True, BLACK)
+        screen.blit(reset_text, (28, SCREEN_HEIGHT - 28))
         
         # Render Controller Toggle Buttons
         # P Controller Button
